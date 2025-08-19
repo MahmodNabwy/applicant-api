@@ -18,6 +18,9 @@ namespace Infrastructure
             services.AddHttpClient<IJsonPlaceholderApiService, JsonPlaceholderApiService>()
                 .SetHandlerLifetime(TimeSpan.FromMinutes(1))
                 .AddPolicyHandler(GetRetryPolicy());
+            services.AddHttpClient<ICountryValidationApi, CountryValidationApi>()
+                .SetHandlerLifetime(TimeSpan.FromMinutes(1))
+                .AddPolicyHandler(GetRetryPolicy());
             services.ConfigureOptions<IntegrationOptionsSetup>();
             services.AddDbContext<ApplicationDbContext>((sp, options) =>
             {

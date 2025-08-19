@@ -8,8 +8,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
     }
-
-    public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
+    
+    public DbSet<Applicant> Applicants => Set<Applicant>();
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

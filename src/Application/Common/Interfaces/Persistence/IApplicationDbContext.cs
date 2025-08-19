@@ -4,6 +4,6 @@ using Microsoft.EntityFrameworkCore;
 namespace Application.Common.Interfaces.Persistence;
 public interface IApplicationDbContext
 {
-    DbSet<BlogPost> BlogPosts { get; }
+    DbSet<Applicant> Applicants { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }
