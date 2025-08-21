@@ -1,87 +1,78 @@
-## Clean Lean Architecture Solution Template
+## Applicant Web API
 
-[![Build Status](https://dev.azure.com/rimazmohommed523/Clean.Lean.Architecture.WebApi.AspNetCore.Solution.Template/_apis/build/status%2FClean.Lean.Architecture.WebApi.Template?branchName=master)](https://dev.azure.com/rimazmohommed523/Clean.Lean.Architecture.WebApi.AspNetCore.Solution.Template/_build/latest?definitionId=22&branchName=master)
+### Overview
 
-#### Summary
-The objective of this .NET Core template is to expedite the process for developers to swiftly establish a .NET Core Web API project that adheres to clean architecture principles.
+This project is a .NET 8 Web API for managing applicants, built with clean architecture principles.
 
-#### This templates currently provides you the following out of the box :
-- A dotnet core 9.0 solution built using clean architecture principles.
-- Mediatr pipeline with logging, error handling and validation implemented as cross-cutting concerns
-- FluentValidation for validating api inputs
-- API integration with a 3rd party (https://jsonplaceholder.typicode.com) using HttpClient & Polly for retries.
-- Efcore Sql Server implementation with localdb.
-- An .editorconfig file for defining consistent code styles
-- Husky pre-commit hooks that format code on git commit.
+- **Application layer**: MediatR for CQRS, FluentValidation, pipeline behaviours for logging and validation
+- **Domain**: `Applicant` entity
+- **Infrastructure**: EF Core (SQL Server), Polly-enabled HTTP client for country validation
+- **Web API**: Controllers + global exception handling, Swagger UI
 
+### Key Features
 
-**If you find this project useful, please give it a star on [github](https://github.com/rimaz523/Clean.Lean.Architecture.WebApi.AspNetCore.Solution.Template). Thanks! ⭐**
+- **Create applicant** with validation:
+  - Name/FamilyName min length 5
+  - Address min length 10
+  - Email required, valid format, and unique
+  - Age between 20 and 60
+  - Country validated through an external service
+- **Update applicant** with same validations (including email uniqueness)
+- **List applicants** with optional paging; returns `Address` and `Country`
+- **Get applicant by id** returning full details
+- **Hire applicant** `POST /api/applicants/{id}/hire` (400 if already hired)
+- **DTO mappings**: `CountryOfOrigin` maps to `Country` in response DTOs
 
-#### Prerequisites
-- .NET 9.0 SDK (https://dotnet.microsoft.com/en-us/download)
-- Optionally Visual Studio 2022 or above (https://visualstudio.microsoft.com/downloads/)
+### Run the API
 
-#### Getting Started
-One of the most straightforward methods to begin is by installing this .NET template using your command line.
-```bash
-dotnet new install Clean.Lean.Architecture.WebApi.AspNetCore.Solution.Template
+From the repository root:
+
+```powershell
+dotnet run --project src/WebApi --launch-profile WebApi
 ```
 
-Once installed, create a new solution using the template.
-```bash
-dotnet new cla-sln --name YourSolutionName
+Swagger UI will be available at `https://localhost:7292/swagger` or `http://localhost:5066/swagger`.
+
+If you need to trust HTTPS dev cert (Windows):
+
+```powershell
+dotnet dev-certs https --trust
 ```
 
-#### Launch the app:
-To launch your app, first move to the WebApi project in your solution.
-```bash
-cd <sln-name>\src\WebApi\
-```
-Then run the app
-```bash
-dotnet run
-```
-![commands to run the app](https://raw.githubusercontent.com/rimaz523/Clean.Lean.Architecture.WebApi.AspNetCore.Solution.Template/master/meta/dotnet_run.png)
+### Configuration
 
-Looking at the command output you can see the app is running on https://localhost:7292
+Set the SQL Server connection string in `src/WebApi/appsettings.json` under `Persistence:SqlServerConnectionString`.
 
-Open your browser and go to https://localhost:7292/swagger/ to view your api swagger file.
+### Database Migrations
 
-![swagger](https://raw.githubusercontent.com/rimaz523/Clean.Lean.Architecture.WebApi.AspNetCore.Solution.Template/master/meta/swagger_image.png)
+Create a migration (if needed):
 
-#### Configure Husky Pre-commit Hooks
-Before installing husky, you will need to restore it.
-```bash
-dotnet tool restore
-```
-Also make sure you have initialized git at the root of your solution
-```bash
-git init
-```
-To install husky, run the following command from the root of your solution
-```bash
-  dotnet husky install
-```
-You will then notice that whenever you commit your code, husky automatically runs `dotnet format` to ensure your coding styles are consistent and fixes and issues for you. You can find the husky hook in the `<root>/.husky/pre-commit` file
-
-
-#### Configure Database
-This solution uses EF Core with SQL Server localDB.
-To switch with your SQL server connection string update the **SqlServerConnectionString** value in `appsettings.json`, or alternatively you can continue to use localDB.
-
-```bash
-"Persistence": {
-  "SqlServerConnectionString": "Server=(localdb)\\mssqllocaldb;Database=clean-app-db;Trusted_Connection=True;MultipleActiveResultSets=true"
-}
+```powershell
+dotnet ef migrations add <MigrationName> --project src/Infrastructure --startup-project src/WebApi --context Infrastructure.Persistence.ApplicationDbContext
 ```
 
-**To run a database migration**
-```bash
-dotnet ef migrations add "MyMigrationName" --project .\src\Infrastructure\ --startup-project .\src\WebApi\
-```
-**To update your database with schema updates**
-```bash
-dotnet ef database update --project .\src\WebApi\
+Apply migrations:
+
+```powershell
+dotnet ef database update --project src/Infrastructure --startup-project src/WebApi --context Infrastructure.Persistence.ApplicationDbContext
 ```
 
-**Note** that you might need to install dotnet ef tools first before you run db migrations and updates : `dotnet tool install --global dotnet-ef`
+Note: A unique index on `Applicant.EmailAdress` is configured in the model to enforce unique emails at the database level.
+
+### API Endpoints
+
+- `GET /api/applicants` — list applicants (query: `page`, `pageSize`)
+- `GET /api/applicants/{id}` — get by id
+- `POST /api/applicants` — create
+- `PUT /api/applicants/{id}` — update
+- `DELETE /api/applicants/{id}` — delete
+- `POST /api/applicants/{id}/hire` — mark as hired
+
+### Error Handling
+
+Validation errors return HTTP 400 with `ValidationProblemDetails`.
+Missing resources return HTTP 404 with `ProblemDetails`.
+
+### Notes on Husky
+
+Husky (git hooks) is not used in this repository. Any previous template references were removed from this README.

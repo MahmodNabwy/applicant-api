@@ -1,6 +1,7 @@
 using Application;
 using Infrastructure;
 using Infrastructure.Persistence;
+using Microsoft.Extensions.DependencyInjection;
 using WebApi.Infrastructure;
 
 namespace WebApi;
@@ -32,6 +33,7 @@ public class Program
         // Configure Exception Handlers
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddProblemDetails();
+         
 
         var app = builder.Build();
 

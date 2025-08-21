@@ -1,14 +1,20 @@
 using Application.Common.Interfaces.Persistence;
+using Application.Helpers;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Applicants.Queries.ListApplicants;
 
-public class ListApplicantsQuery : IRequest<List<ApplicantListItemDto>>
+public class ListApplicantsQuery : IRequest<ApplicantDataGetterDto>
 {
     public int? Page { get; set; }
     public int? PageSize { get; set; }
 }
-
+public class ApplicantDataGetterDto
+{
+    public Pager Page { get; set; }
+    public List<ApplicantListItemDto> Data { get; set; }
+}
 public class ApplicantListItemDto
 {
     public int Id { get; set; }
@@ -21,7 +27,7 @@ public class ApplicantListItemDto
     public int Age { get; set; }
 }
 
-public class ListApplicantsQueryHandler : IRequestHandler<ListApplicantsQuery, List<ApplicantListItemDto>>
+public class ListApplicantsQueryHandler : IRequestHandler<ListApplicantsQuery, ApplicantDataGetterDto>
 {
     private readonly IApplicationDbContext _dbContext;
 
@@ -30,14 +36,15 @@ public class ListApplicantsQueryHandler : IRequestHandler<ListApplicantsQuery, L
         _dbContext = dbContext;
     }
 
-    public async Task<List<ApplicantListItemDto>> Handle(ListApplicantsQuery request, CancellationToken cancellationToken)
+    public async Task<ApplicantDataGetterDto> Handle(ListApplicantsQuery request, CancellationToken cancellationToken)
     {
         var ordered = _dbContext.Applicants.OrderByDescending(x => x.Id).AsQueryable();
-        if (request.Page.HasValue && request.PageSize.HasValue && request.Page > 0 && request.PageSize > 0)
-        {
-            ordered = ordered.Skip((request.Page.Value - 1) * request.PageSize.Value).Take(request.PageSize.Value);
-        }
-        return ordered.Select(x => new ApplicantListItemDto
+        int totalCount = await ordered.CountAsync();
+        var page = new Pager();
+        page.Set(request.PageSize, request.Page, totalCount);
+        ordered = ordered.AddPage(page.Skip, page.PageSize);
+
+        var data = await ordered.Select(x => new ApplicantListItemDto
         {
             Id = x.Id,
             Name = x.Name,
@@ -46,7 +53,12 @@ public class ListApplicantsQueryHandler : IRequestHandler<ListApplicantsQuery, L
             EmailAdress = x.EmailAdress,
             Age = x.Age,
             Country = x.CountryOfOrigin,
-            Hired = x.Hired
-        }).ToList();
+            Hired = x.Hired,
+        }).ToListAsync();
+        return new ApplicantDataGetterDto
+        {
+            Data = data,
+            Page = page
+        };
     }
 }

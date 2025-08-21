@@ -1,9 +1,11 @@
+
+
 using Application.Applicants.Commands.CreateApplicant;
 using Application.Applicants.Commands.DeleteApplicant;
+using Application.Applicants.Commands.HireApplicant;
 using Application.Applicants.Commands.UpdateApplicant;
 using Application.Applicants.Queries.GetApplicantById;
 using Application.Applicants.Queries.ListApplicants;
-using Application.Applicants.Commands.HireApplicant;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Controllers;
@@ -20,7 +22,7 @@ public class ApplicantsController : ApiControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<ApplicantListItemDto>>> List([FromQuery] ListApplicantsQuery query)
+    public async Task<ActionResult<ApplicantDataGetterDto>> List([FromQuery] ListApplicantsQuery query)
     {
         return await Mediator.Send(query);
     }
