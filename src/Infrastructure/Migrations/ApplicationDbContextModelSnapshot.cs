@@ -57,7 +57,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Applicants");
+                    b.ToTable("Applicants", (string)null);
                 });
 #pragma warning restore 612, 618
         }

@@ -31,7 +31,7 @@ public class CountryValidationApi : ICountryValidationApi
         }
         catch (Exception ex)
         {
-            var error = ex.Message;
+
             return false;
         }
     }

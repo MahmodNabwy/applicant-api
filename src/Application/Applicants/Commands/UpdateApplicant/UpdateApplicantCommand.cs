@@ -2,6 +2,7 @@ using Application.Common.Interfaces.ApiServices;
 using Application.Common.Interfaces.Persistence;
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Applicants.Commands.UpdateApplicant;
 
@@ -19,7 +20,7 @@ public class UpdateApplicantCommand : IRequest
 
 public class UpdateApplicantCommandValidator : AbstractValidator<UpdateApplicantCommand>
 {
-    public UpdateApplicantCommandValidator(ICountryValidationApi countryValidationApi)
+    public UpdateApplicantCommandValidator(ICountryValidationApi countryValidationApi, IApplicationDbContext dbContext)
     {
         RuleFor(x => x.Name)
             .NotEmpty()
@@ -32,7 +33,18 @@ public class UpdateApplicantCommandValidator : AbstractValidator<UpdateApplicant
             .MinimumLength(10);
         RuleFor(x => x.EmailAdress)
             .NotEmpty()
-            .EmailAddress();
+            .EmailAddress()
+            .MustAsync(async (command, email, ct) =>
+            {
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    return true;
+                }
+                var normalized = email.ToLower();
+                return !await dbContext.Applicants
+                    .AnyAsync(a => a.EmailAdress.ToLower() == normalized && a.Id != command.Id, ct);
+            })
+            .WithMessage("Email address already exists");
         RuleFor(x => x.Age)
             .InclusiveBetween(20, 60);
         RuleFor(x => x.Hired)

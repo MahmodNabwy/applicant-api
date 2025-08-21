@@ -15,9 +15,7 @@ namespace Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddHttpClient<IJsonPlaceholderApiService, JsonPlaceholderApiService>()
-                .SetHandlerLifetime(TimeSpan.FromMinutes(1))
-                .AddPolicyHandler(GetRetryPolicy());
+
             services.AddHttpClient<ICountryValidationApi, CountryValidationApi>()
                 .SetHandlerLifetime(TimeSpan.FromMinutes(1))
                 .AddPolicyHandler(GetRetryPolicy());

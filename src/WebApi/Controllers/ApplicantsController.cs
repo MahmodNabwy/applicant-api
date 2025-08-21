@@ -3,6 +3,7 @@ using Application.Applicants.Commands.DeleteApplicant;
 using Application.Applicants.Commands.UpdateApplicant;
 using Application.Applicants.Queries.GetApplicantById;
 using Application.Applicants.Queries.ListApplicants;
+using Application.Applicants.Commands.HireApplicant;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Controllers;
@@ -49,6 +50,13 @@ public class ApplicantsController : ApiControllerBase
     public async Task<ActionResult> Delete([FromRoute] int id)
     {
         await Mediator.Send(new DeleteApplicantCommand { Id = id });
+        return NoContent();
+    }
+
+    [HttpPost("{id}/hire")]
+    public async Task<ActionResult> Hire([FromRoute] int id)
+    {
+        await Mediator.Send(new HireApplicantCommand { Id = id });
         return NoContent();
     }
 } 

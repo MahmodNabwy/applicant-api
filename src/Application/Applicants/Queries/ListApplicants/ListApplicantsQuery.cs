@@ -14,8 +14,11 @@ public class ApplicantListItemDto
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string FamilyName { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string Country { get; set; } = string.Empty;
     public string EmailAdress { get; set; } = string.Empty;
     public bool Hired { get; set; }
+    public int Age { get; set; }
 }
 
 public class ListApplicantsQueryHandler : IRequestHandler<ListApplicantsQuery, List<ApplicantListItemDto>>
@@ -39,8 +42,11 @@ public class ListApplicantsQueryHandler : IRequestHandler<ListApplicantsQuery, L
             Id = x.Id,
             Name = x.Name,
             FamilyName = x.FamilyName,
+            Address = x.Address,
             EmailAdress = x.EmailAdress,
+            Age = x.Age,
+            Country = x.CountryOfOrigin,
             Hired = x.Hired
         }).ToList();
     }
-} 
+}

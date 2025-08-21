@@ -5,6 +5,7 @@ using AutoMapper;
 using Domain.Entities;
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Applicants.Commands.CreateApplicant;
 
@@ -14,10 +15,16 @@ public class ApplicantDto : IMapFrom<Applicant>
     public string Name { get; set; } = string.Empty;
     public string FamilyName { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
-    public string CountryOfOrigin { get; set; } = string.Empty;
+    public string Country { get; set; } = string.Empty;
     public string EmailAdress { get; set; } = string.Empty;
     public int Age { get; set; }
     public bool Hired { get; set; }
+
+    public void Mapping(Profile profile)
+    {
+        profile.CreateMap<Applicant, ApplicantDto>()
+            .ForMember(d => d.Country, opt => opt.MapFrom(s => s.CountryOfOrigin));
+    }
 }
 
 public class CreateApplicantCommand : IRequest<ApplicantDto>
@@ -33,7 +40,7 @@ public class CreateApplicantCommand : IRequest<ApplicantDto>
 
 public class CreateApplicantCommandValidator : AbstractValidator<CreateApplicantCommand>
 {
-    public CreateApplicantCommandValidator(ICountryValidationApi countryValidationApi)
+    public CreateApplicantCommandValidator(ICountryValidationApi countryValidationApi, IApplicationDbContext dbContext)
     {
         RuleFor(x => x.Name)
             .NotEmpty()
@@ -46,7 +53,17 @@ public class CreateApplicantCommandValidator : AbstractValidator<CreateApplicant
             .MinimumLength(10);
         RuleFor(x => x.EmailAdress)
             .NotEmpty()
-            .EmailAddress();
+            .EmailAddress()
+            .MustAsync(async (email, ct) =>
+            {
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    return true;
+                }
+                var normalized = email.ToLower();
+                return !await dbContext.Applicants.AnyAsync(a => a.EmailAdress.ToLower() == normalized, ct);
+            })
+            .WithMessage("Email address already exists");
         RuleFor(x => x.Age)
             .InclusiveBetween(20, 60);
         RuleFor(x => x.Hired)
@@ -54,7 +71,7 @@ public class CreateApplicantCommandValidator : AbstractValidator<CreateApplicant
         RuleFor(x => x.CountryOfOrigin)
             .NotEmpty()
             .MustAsync(async (country, ct) => await countryValidationApi.IsValidCountryByFullName(country, ct))
-            .WithMessage("CountryOfOrigin must be a valid country");
+            .WithMessage("Country must be a valid country name like:Egypt");
     }
 }
 
